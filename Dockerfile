@@ -7,7 +7,7 @@ COPY ./app /app
 RUN mkdir /dependencies
 COPY ./requirements.txt /dependencies/requirements.txt
 COPY ./setup.py /dependencies/setup.py
-COPY ./hseling_api_template /dependencies/hseling_api_template
+COPY ./hseling_api_catandkittens /dependencies/hseling_api_catandkittens
 
 RUN pip install -r /dependencies/requirements.txt
 RUN pip install /dependencies

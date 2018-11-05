@@ -1,6 +1,6 @@
 import pytest
 
-from hseling_api_template.process import process_data
+from hseling_api_catandkittens.process import process_data
 
 
 test_data = [
