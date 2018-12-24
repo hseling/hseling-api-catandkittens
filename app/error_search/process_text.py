@@ -1,7 +1,7 @@
 from conllu import parse
 from ufal.udpipe import Model, Pipeline
-from highlighter import HTMLStyle
-from search import Searcher
+from error_search.highlighter import HTMLStyle
+from error_search.search import Searcher
 
 ud_model = Model.load('russian-syntagrus-ud-2.3-181115.udpipe')
 

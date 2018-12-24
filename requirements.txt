@@ -9,3 +9,11 @@ lxml
 html5lib
 beautifulsoup4
 scrapy
+ufal.udpipe
+conllu
+alphabet_detector
+gensim.models
+collections
+nltk.tokenize
+re
+math
