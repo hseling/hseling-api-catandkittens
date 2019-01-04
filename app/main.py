@@ -8,11 +8,9 @@ from hseling_api_catandkittens.query import query_data
 
 # from error_search.process_text import process_text
 
-ALLOWED_EXTENSIONS = ['txt','conll','xlsx']
-
+ALLOWED_EXTENSIONS = ['txt', 'conll', 'xlsx']
 
 log = getLogger(__name__)
-
 
 app = Flask(__name__)
 app.config.update(
@@ -32,7 +30,7 @@ def process_task(file_ids_list=None):
                             if (boilerplate.UPLOAD_PREFIX + file_id)
                             in files_to_process]
     data_to_process = {file_id[len(boilerplate.UPLOAD_PREFIX):]:
-                       boilerplate.get_file(file_id)
+                           boilerplate.get_file(file_id)
                        for file_id in files_to_process}
     process_data(data_to_process)
     processed_file_ids = list()
@@ -109,6 +107,7 @@ def test_mysql_endpoint():
         schema.setdefault(table_name.decode('utf-8'), []).append(column_name)
     return jsonify({"schema": schema})
 
+
 @app.route("/input_text", methods=['GET', 'POST'])
 def process_input_text():
     got = request.get_json()
@@ -121,10 +120,11 @@ def process_input_text():
     elif isinstance(got, dict):
         loaded = got
     input_text = loaded['text']
-    #processed_text = process_text(input_text)
-    return jsonify({"input_text":input_text})
+    # processed_text = process_text(input_text)
+    return jsonify({"input_text": input_text})
 
-@app.route("/search_text", methods=['GET','POST'])
+
+@app.route("/search_text", methods=['GET', 'POST'])
 def process_search_text():
     got = request.get_json()
     if isinstance(got, str):
@@ -134,6 +134,19 @@ def process_search_text():
     elif isinstance(got, dict):
         loaded = got
     return jsonify({"found": search_data(loaded['text'])})
+
+
+@app.route("/search_collocations", methods=['GET', 'POST'])
+def process_search_collocations():
+    got = request.get_json()
+    if isinstance(got, str):
+        loaded = json.loads(got)
+        if not loaded:
+            raise Exception("Cannot load json")
+    elif isinstance(got, dict):
+        loaded = got
+    return jsonify({"found": search_collocations(loaded)})
+
 
 def get_endpoints(ctx):
     def endpoint(name, description, active=True):
@@ -157,7 +170,6 @@ def get_endpoints(ctx):
     return {ep["name"]: ep for ep in all_endpoints if ep}
 
 
-
 @app.route("/")
 def main_endpoint():
     ctx = {"restricted_mode": boilerplate.RESTRICTED_MODE}
@@ -166,6 +178,5 @@ def main_endpoint():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True, port=80)
-
 
 __all__ = [app, celery]

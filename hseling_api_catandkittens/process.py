@@ -2,19 +2,8 @@ from work_with_db import *
 
 
 def process_data(data_to_process):
-    """Split all files contents and then combine unique words into resulting file.
+    """add data to the database
     """
-    # result = set()
-    #
-    # for _, contents in data_to_process.items():
-    #     if isinstance(contents, bytes):
-    #         text = contents.decode('utf-8')
-    #     else:
-    #         text = contents
-    #     result |= set(text.split())
-    #
-    # if result:
-    #     yield None, '\n'.join(sorted(list(result)))
     for key in data_to_process.keys():
         if key[-3:] == 'txt':
             write_to_db_metas(data_to_process)
@@ -25,5 +14,20 @@ def process_data(data_to_process):
         else:
             raise Exception("Wrong filename: {0}".format(key))
 
+
 def search_data(data_to_search):
+    """
+    search in the CAT tables
+    :param data_to_search:
+    :return: (dict)
+    """
     return search_in_db(data_to_search)
+
+
+def search_collocations(data_to_search):
+    """
+    search in the collocations dictionary tables
+    :param data_to_search:
+    :return: (dict)
+    """
+    return search_in_collocations(data_to_search)
