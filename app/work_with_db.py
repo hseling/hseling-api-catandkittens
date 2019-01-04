@@ -81,14 +81,17 @@ def write_to_db_collocations(data_to_process):
 
 
 def search_in_db(data_to_search):
-    CUR.execute("SELECT * FROM words_cat WHERE word = '{0}'".format(data_to_search))
+    CUR.execute("SELECT * FROM words_cat WHERE word = %s",(data_to_search,))
     return CUR.fetchall()
 
 
 def search_in_collocations(data_to_search):
+    param = '%' + data_to_search['text'] + '%'
     if not data_to_search.get('count'):
-        CUR.execute("SELECT * FROM collocations_2_grams WHERE occurence LIKE '%{0}%'".format(data_to_search['text']))
+        CUR.execute("SELECT * FROM collocations_2_grams WHERE occurence LIKE %s",(param,))
+
     else:
-        CUR.execute("SELECT * FROM collocations_{0}_grams WHERE occurence LIKE '%{1}%'".format(data_to_search['count'],
-                                                                                               data_to_search['text']))
+        CUR.execute("SELECT * FROM collocations_{0}_grams ".format(data_to_search['count']) +
+                                                                   "WHERE occurence LIKE %s",(param,))
+        # count приходит не от юзера
     return CUR.fetchall()
