@@ -31,3 +31,11 @@ def search_collocations(data_to_search):
     :return: (dict)
     """
     return search_in_collocations(data_to_search)
+
+def search_metadata(data_to_search):
+    """
+    search in the metadata by text id
+    :param data_to_search:
+    :return: (dict)
+    """
+    return search_in_metadata(data_to_search)

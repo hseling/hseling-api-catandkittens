@@ -126,14 +126,17 @@ def process_input_text():
 
 @app.route("/search_text", methods=['GET', 'POST'])
 def process_search_text():
-    got = request.get_json()
+    got, loaded = request.get_json(), None
     if isinstance(got, str):
         loaded = json.loads(got)
         if not loaded:
             raise Exception("Cannot load json")
     elif isinstance(got, dict):
         loaded = got
-    return jsonify({"found": search_data(loaded['text'])})
+    if loaded.get('lemma1'):
+        return jsonify({"found": search_data(loaded)})
+    else:
+        return jsonify({"found": search_data(loaded['text'])})
 
 
 @app.route("/search_collocations", methods=['GET', 'POST'])
@@ -146,6 +149,18 @@ def process_search_collocations():
     elif isinstance(got, dict):
         loaded = got
     return jsonify({"found": search_collocations(loaded)})
+
+
+@app.route("/search_metadata", methods=['GET', 'POST'])
+def process_search_metadata():
+    got = request.get_json()
+    if isinstance(got, str):
+        loaded = json.loads(got)
+        if not loaded:
+            raise Exception("Cannot load json")
+    elif isinstance(got, dict):
+        loaded = got
+    return jsonify({"found": search_metadata(loaded['text'])})
 
 
 def get_endpoints(ctx):
