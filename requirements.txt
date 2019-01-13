@@ -12,3 +12,8 @@ scrapy
 defusedxml
 xlrd
 tqdm
+conllu
+ufal.udpipe
+nltk
+gensim
+alphabet-detector
