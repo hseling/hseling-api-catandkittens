@@ -8,6 +8,8 @@ RUN mkdir /dependencies
 COPY ./requirements.txt /dependencies/requirements.txt
 COPY ./setup.py /dependencies/setup.py
 COPY ./hseling_api_catandkittens /dependencies/hseling_api_catandkittens
-
+RUN apk add gfortran g++ build-base wget freetype-dev libpng-dev openblas-dev
+RUN pip install numpy==1.15.4
+RUN pip install scipy==0.18.1
 RUN pip install -r /dependencies/requirements.txt
 RUN pip install /dependencies
