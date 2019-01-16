@@ -7,6 +7,12 @@ from tqdm import tqdm
 defusedxml.defuse_stdlib()
 CON = get_mysql_connection()
 CUR = CON.cursor(dictionary=True)
+COLLOCATION_TABLES_MAPPING = {'Лингвистика': 'linguistics',
+                              'Социология': 'sociology',
+                              'Политология': 'politology',
+                              'Юриспруденция': 'law',
+                              'Психология и педагогика': 'psychology',
+                              'Экономика': 'economics'}
 
 
 def write_to_db_metas(data_to_process):
@@ -67,8 +73,9 @@ def write_to_db_words(data_to_process):
 
 
 def write_to_db_collocations(data_to_process):
+    domain = list(data_to_process.keys())[0].split('.')[0]
     for i in range(2, 7):
-        tablename = "collocations_{0}_grams_{1}".format(i, list(data_to_process.keys())[0].split('.')[0])
+        tablename = "collocations_{0}_grams_{1}".format(i, domain)
         CUR.execute("SHOW TABLES")
         result = CUR.fetchall()
         tables = [list(dictionary.values())[0].decode("utf-8") for dictionary in result]
@@ -89,8 +96,9 @@ def write_to_db_collocations(data_to_process):
                     log_like = ngrams.cell(r, 2).value
                     t_score = ngrams.cell(r, 6).value
                     values = (occurence, pos, abs_freq, norm_freq, pmi, log_like, t_score)
-                    CUR.execute("INSERT INTO " + "collocations_{0}_grams".format(
-                        i + 2) + " (occurence, POS_tag, absolute_frequency, normalized_frequency, PMI, log_likelihood, t_score) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    CUR.execute("INSERT INTO " + "collocations_{0}_grams_{1}".format(
+                        i + 2,
+                        domain) + " (occurence, POS_tag, absolute_frequency, normalized_frequency, PMI, log_likelihood, t_score) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                                 values)
                 CON.commit()
         except EntitiesForbidden:
@@ -174,12 +182,18 @@ def search_in_db(data_to_search):
 def search_in_collocations(data_to_search):
     param = '%' + data_to_search['text'] + '%'
     if not data_to_search.get('count'):
-        CUR.execute("SELECT * FROM collocations_2_grams WHERE occurence LIKE %s", (param,))
-
-    else:
-        CUR.execute("SELECT * FROM collocations_{0}_grams ".format(data_to_search['count']) +
-                    "WHERE occurence LIKE %s", (param,))
+        query = "SELECT * FROM collocations_2_grams WHERE occurence LIKE %s"
+        if data_to_search.get('domain'):
+            query = "SELECT * FROM collocations_2_grams_{0} WHERE occurence LIKE %s".format(
+                COLLOCATION_TABLES_MAPPING[data_to_search['domain']])
+    elif data_to_search.get('count'):
+        query = "SELECT * FROM collocations_{0}_grams ".format(data_to_search['count']) + "WHERE occurence LIKE %s"
+        if data_to_search.get('domain'):
+            query = "SELECT * FROM collocations_{0}_grams_{1} ".format(data_to_search['count'],
+                                                                       COLLOCATION_TABLES_MAPPING[data_to_search[
+                                                                           'domain']]) + "WHERE occurence LIKE %s"
         # count приходит не от юзера
+    CUR.execute(query, (param,))
     return CUR.fetchall()
 
 
