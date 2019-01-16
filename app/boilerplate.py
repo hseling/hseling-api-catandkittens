@@ -25,7 +25,7 @@ MYSQL_USER = environ["MYSQL_USER"]
 MYSQL_PASSWORD = environ["MYSQL_PASSWORD"]
 MYSQL_DATABASE = environ["MYSQL_DATABASE"]
 
-ALLOWED_EXTENSIONS = ['txt', 'xml']
+ALLOWED_EXTENSIONS = ['txt', 'conll','xlsx']
 UPLOAD_PREFIX = 'upload/'
 PROCESSED_PREFIX = 'processed/'
 
@@ -40,6 +40,7 @@ ENDPOINT_UPLOAD = "ENDPOINT_UPLOAD"
 ENDPOINT_PROCESS = "ENDPOINT_PROCESS"
 ENDPOINT_STATUS = "ENDPOINT_STATUS"
 ENDPOINT_QUERY = "ENDPOINT_QUERY"
+ENDPOINT_INPUT = "ENDPOINT_INPUT"
 
 
 RESTRICTED_MODE = environ["RESTRICTED_MODE"]
@@ -119,7 +120,8 @@ def get_file(filename):
 @with_minio
 def list_files(**kwargs):
     return list(str(file_id.object_name) for file_id
-                in minioClient.list_objects(MINIO_BUCKET_NAME, **kwargs))
+               in minioClient.list_objects(MINIO_BUCKET_NAME, **kwargs))
+
 
 
 def allowed_file(filename, allowed_extensions=None):

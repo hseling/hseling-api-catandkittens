@@ -9,5 +9,7 @@ build
 dist
 /venv/
 .env
+env/
 !.gitignore
 !.travis*
+.idea/
