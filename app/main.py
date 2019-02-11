@@ -1,10 +1,17 @@
 from flask import Flask, jsonify, request
 import logging
-
+from gensim.models import Word2Vec
+import os
 import boilerplate
 import json
 from hseling_api_catandkittens.process import *
 from hseling_api_catandkittens.query import query_data
+
+MODEL = 'error_search/Models/LinguisticModel'
+try:
+    wv_model = Word2Vec.load(MODEL)
+except FileNotFoundError:
+    raise Exception("w2v model not found, current directory is {0}".format(os.getcwd()))
 
 
 ALLOWED_EXTENSIONS = ['txt', 'conll', 'xlsx']
@@ -53,7 +60,7 @@ def process_user_text_task(input_text=''):
         pipeline = Pipeline(ud_model, 'tokenize', Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu')
         out = pipeline.process(input_text)
         tree = parse(out)
-        return process_text(tree)
+        return process_text(tree, wv_model)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_endpoint():

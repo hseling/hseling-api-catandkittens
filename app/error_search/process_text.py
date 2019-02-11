@@ -1,25 +1,20 @@
-from conllu import parse
-from ufal.udpipe import Model, Pipeline
 from error_search.highlighter import HTMLStyle
 from error_search.search import Searcher
 
-ud_model = Model.load('russian-syntagrus-ud-2.3-181115.udpipe')
-
-pipeline = Pipeline(ud_model, 'tokenize', Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu')
-
-searcher = Searcher()
-
-style = HTMLStyle()
-
-def process_text(text):
+def process_text(tree, model):
     """
     Обработка входного текста - поиск ошибок
     :param text: входной текст (строка)
     :return: строка, где ошибочные слова окружены соответствующими html-тегами
     """
-    out = pipeline.process(text)
-    tree = parse(out)
-    check = searcher.check_all(tree)
+    if not tree:
+        raise Exception("Empty tree")
+
+    searcher = Searcher()
+    if not searcher:
+        raise Exception("Empty searcher")
+    style = HTMLStyle()
+    check = searcher.check_all(tree, model)
 
     sents = []
     for s, sent in enumerate(tree):
@@ -40,5 +35,4 @@ def process_text(text):
                 out_t.append(sents[i][j])
 
     string = ' '.join(out_t)
-
     return string
