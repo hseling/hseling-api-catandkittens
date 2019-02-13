@@ -1,17 +1,12 @@
 from flask import Flask, jsonify, request
 import logging
-from gensim.models import Word2Vec
-import os
+
 import boilerplate
 import json
 from hseling_api_catandkittens.process import *
 from hseling_api_catandkittens.query import query_data
 
-MODEL = 'error_search/Models/LinguisticModel'
-try:
-    wv_model = Word2Vec.load(MODEL)
-except FileNotFoundError:
-    raise Exception("w2v model not found, current directory is {0}".format(os.getcwd()))
+
 
 
 ALLOWED_EXTENSIONS = ['txt', 'conll', 'xlsx']
@@ -56,11 +51,13 @@ def process_user_text_task(input_text=''):
         from ufal.udpipe import Model, Pipeline
         from error_search.process_text import process_text
 
+
         ud_model = Model.load('error_search/russian-syntagrus-ud-2.0-170801.udpipe')
         pipeline = Pipeline(ud_model, 'tokenize', Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu')
         out = pipeline.process(input_text)
         tree = parse(out)
-        return process_text(tree, wv_model)
+
+        return process_text(tree)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_endpoint():
