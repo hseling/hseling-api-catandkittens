@@ -11,6 +11,8 @@ def process_data(data_to_process):
             write_to_db_words(data_to_process)
         elif key[-4:] == 'xlsx':
             write_to_db_collocations(data_to_process)
+        elif key.rsplit('.', 1)[1].lower() in ['udpipe','npy','w2v']:
+            pass
         else:
             raise Exception("Wrong filename: {0}".format(key))
 

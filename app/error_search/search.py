@@ -2,7 +2,7 @@ from collections import defaultdict
 import logging
 from gensim.models import Word2Vec
 import os
-
+from boilerplate import fget_file
 
 class Searcher:
     """
@@ -86,9 +86,14 @@ class Searcher:
     def check_all(self, tree):
         #s - sentence number
         #i - word number
-        MODEL = 'error_search/Models/LinguisticModel'
+        if not os.path.exists('error_search/models/'):
+            os.mkdir('error_search/models/')
+        if not os.path.exists('error_search/models/LinguisticModel'):
+            fget_file('upload/LinguisticModel.w2v.trainables.syn1neg.npy','error_search/models/LinguisticModel.trainables.syn1neg.npy')
+            fget_file('upload/LinguisticModel.w2v.wv.vectors.npy','error_search/models/LinguisticModel.wv.vectors.npy')
+            fget_file('upload/LinguisticModel.w2v','error_search/models/LinguisticModel')
         try:
-            model = Word2Vec.load(MODEL)
+            model = Word2Vec.load('error_search/models/LinguisticModel')
         except FileNotFoundError:
             raise Exception("w2v model not found, current directory is {0}".format(os.getcwd()))
         logging.basicConfig(level=logging.INFO, filename='found.log')

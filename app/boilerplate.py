@@ -116,6 +116,9 @@ def put_file(filename, contents, contents_length=None):
 def get_file(filename):
     return minioClient.get_object(MINIO_BUCKET_NAME, filename).data
 
+@with_minio
+def fget_file(filename,filepath):
+    minioClient.fget_object(MINIO_BUCKET_NAME, filename, filepath)
 
 @with_minio
 def list_files(**kwargs):
