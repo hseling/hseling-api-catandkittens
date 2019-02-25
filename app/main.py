@@ -1,16 +1,16 @@
 from flask import Flask, jsonify, request
-from logging import getLogger
+import logging
 
 import boilerplate
 import json
 from hseling_api_catandkittens.process import *
 from hseling_api_catandkittens.query import query_data
 
-# from error_search.process_text import process_text
 
-ALLOWED_EXTENSIONS = ['txt', 'conll', 'xlsx']
 
-log = getLogger(__name__)
+ALLOWED_EXTENSIONS = ['txt', 'conll', 'xlsx','udpipe','npy','w2v']
+
+log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.update(
@@ -32,6 +32,7 @@ def process_task(file_ids_list=None):
     data_to_process = {file_id[len(boilerplate.UPLOAD_PREFIX):]:
                            boilerplate.get_file(file_id)
                        for file_id in files_to_process}
+
     process_data(data_to_process)
     processed_file_ids = list()
     # for processed_file_id, contents in process_data(data_to_process):
@@ -43,6 +44,21 @@ def process_task(file_ids_list=None):
     #         ))
     return processed_file_ids
 
+@celery.task(time_limit=1200,soft_time_limit=1200)
+def process_user_text_task(input_text=''):
+    if input_text:
+        from conllu import parse
+        from ufal.udpipe import Model, Pipeline
+        from error_search.process_text import process_text
+        import os
+        if not os.path.exists('error_search/russian-syntagrus-ud-2.0-170801.udpipe'):
+            boilerplate.fget_file('upload/russian-syntagrus-ud-2.0-170801.udpipe','error_search/russian-syntagrus-ud-2.0-170801.udpipe')
+        ud_model = Model.load('error_search/russian-syntagrus-ud-2.0-170801.udpipe')
+        pipeline = Pipeline(ud_model, 'tokenize', Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu')
+        out = pipeline.process(input_text)
+        tree = parse(out)
+
+        return process_text(tree)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_endpoint():
@@ -120,8 +136,8 @@ def process_input_text():
     elif isinstance(got, dict):
         loaded = got
     input_text = loaded['text']
-    # processed_text = process_text(input_text)
-    return jsonify({"input_text": input_text})
+    task_id = process_user_text_task.delay(input_text)
+    return jsonify({"input_text": str(task_id)})
 
 
 @app.route("/search_text", methods=['GET', 'POST'])

@@ -1,13 +1,8 @@
 from collections import defaultdict
-from gensim.models import Word2Vec
 import logging
-from alphabet_detector import AlphabetDetector
-
-
-MORE_LESS = ['более', 'менее']
-STATISTICS = "maxs"
-MODEL = 'Linguistics/LinguisticsModel'
-wv_model = Word2Vec.load(MODEL)
+from gensim.models import Word2Vec
+import os
+from boilerplate import fget_file
 
 class Searcher:
     """
@@ -19,7 +14,7 @@ class Searcher:
         self.found_word = defaultdict(list)
 
     def find_genitives(self, gen_chain, word, s, i, threshold=6):
-        if word['feats'] and 'Case' in word['feats'].keys() and word['feats']['Case'] == 'Gen':
+        if word['feats'] and word['feats'].get('Case') == 'Gen':
             gen_chain.append((word['form'], s, i))
         else:
             if len(gen_chain) >= int(threshold):
@@ -32,51 +27,49 @@ class Searcher:
     def find_wrong_comparativ(self, sent, word, i, s):
         if i + 1 < len(sent):
             next = sent[i + 1]
-            if word['form'] in MORE_LESS and 'comp' in next['feats']:
-                self.found['comparatives'].append((word['form'], next['form'], s, i))
-                self.found_word[(word['form'], s, i)].append('comparatives')
+            if word['feats'] and next['feats'] and word['feats'].get('Degree') and next['feats'].get('Degree'):
+                if word['feats']['Degree']=='Cmp' and next['feats']['Degree']=='Cmp':
+                    self.found['comparatives'].append((word['form'], next['form'], s, i))
+                    self.found_word[(word['form'], s, i)].append('comparativ')
+                    self.found_word[(next['form'], s, i+1)].append('comparativ')
 
-    # !
+
     def find_wrong_coordinate_NPs(self, sent, i, s, word, model):
-        if i + 1 < len(sent):
-            if word['form'] == 'и':
-                t = i
-                pair = []
-                while (sent[t]['feats'] and 'S' not in sent[t]['feats']) and (
-                        sent[t]['feats'] and 'V' not in sent[t]['feats']) and t > 0:
-                    t -= 1
-                if sent[t]['feats'] and 'S' in sent[t]['feats']:
-                    pair.append(sent[t]['form'])
-                t = i
-                while (sent[t]['feats'] and 'S' not in sent[t]['feats']) and (
-                        sent[t]['feats'] and 'V' not in sent[t]['feats']) and t < len(sent):
-                    t += 1
-                if sent[t]['feats'] and 'S' in sent[t]['feats']:
-                    pair.append(sent[t]['form'])
-                if len(pair) > 1:
-                    if pair[0] in model.wv.vocab and pair[1] in model.wv.vocab:
-                        self.found['coordinate_NPs'].append(pair + [s, i, model.similarity(pair[0], pair[1])])
-                    else:
-                        self.found['coordinate_NPs'].append(pair + [s, i, float('-inf')])
-                    self.found_word[(pair[0], s, i)].append('coordinate_NPs')
-                    self.found_word[(pair[1], s, i + 1)].append('coordinate_NPs')
+        if word['deprel'] and word['deprel'] == 'cc':
+            head_position = int(word['head']) - 1
+            if head_position<len(sent):
+                head = sent[head_position]
+                head_form = head['form']
+                head_of_head_position = int(head['head']) - 1
+                if head_of_head_position<len(sent):
+                    head_of_head_form = sent[head_of_head_position]['form']
 
-    def not_in_vocabulary(self, ad, word, i, model, s):
-        if word['form'].isalpha() and ad.only_alphabet_chars(word['form'], "CYRILLIC") and word[
-            'form'].lower() not in model.wv.vocab:
+                    if head_of_head_form:
+                        if head_form in model.wv.vocab and head_of_head_form in model.wv.vocab:
+                            sim = model.wv.similarity(head_form, head_of_head_form)
+                        else:
+                            sim = float('-inf')
+                        if sim < -0.05: # порог получен из "шел дождь и рота солдат"
+                            self.found_word[(head_form, s, head_position)].append('coordinate_NPs')
+                            self.found_word[(word['form'], s, i)].append('coordinate_NPs')
+                            self.found_word[(head_of_head_form, s, head_of_head_position)].append('coordinate_NPs')
+
+
+    def not_in_vocabulary(self, word, i, model, s):
+        if word['upostag'] in ['NOUN','ADJ','VERB','ADV'] and word['form'].lower() not in model.wv.vocab:
             self.found['not in vocabulary'].append((word['form'], s, i))
             self.found_word[(word['form'], s, i)].append('not in vocabulary')
 
     def i_vs_we(self, i, word, s):
-        if word['lemma'] == 'Я' and not self.flag_i_vs_we:
+        if word['lemma'].lower() == 'я' and not self.flag_i_vs_we:
             self.flag_i_vs_we = 'i'
             self.found['i vs we'].append((word['form'], s, i))
             self.found_word[(word['form'], s, i)].append('i vs we')
-        elif (word['lemma'] == 'Я' and self.flag_i_vs_we == 'we') or (
-                word['lemma'] == 'МЫ' and self.flag_i_vs_we == 'i'):
+        elif (word['lemma'].lower() == 'я' and self.flag_i_vs_we == 'we') or (
+                word['lemma'].lower() == 'мы' and self.flag_i_vs_we == 'i'):
             self.found['i vs we'].append((word['form'], s, i))
             self.found_word[(word['form'], s, i)].append('i vs we')
-        elif word['lemma'] == 'МЫ' and not self.flag_i_vs_we:
+        elif word['lemma'].lower() == 'мы' and not self.flag_i_vs_we:
             self.flag_i_vs_we = 'we'
             self.found['i vs we'].append((word['form'], s, i))
             self.found_word[(word['form'], s, i)].append('i vs we')
@@ -91,22 +84,30 @@ class Searcher:
             self.found_word[(word['form'], s, i)].append('imperative mood')
 
     def check_all(self, tree):
-        # s - sentence number
-        # i - word number
+        #s - sentence number
+        #i - word number
+        if not os.path.exists('error_search/models/'):
+            os.mkdir('error_search/models/')
+        if not os.path.exists('error_search/models/LinguisticModel'):
+            fget_file('upload/LinguisticModel.w2v.trainables.syn1neg.npy','error_search/models/LinguisticModel.trainables.syn1neg.npy')
+            fget_file('upload/LinguisticModel.w2v.wv.vectors.npy','error_search/models/LinguisticModel.wv.vectors.npy')
+            fget_file('upload/LinguisticModel.w2v','error_search/models/LinguisticModel')
+        try:
+            model = Word2Vec.load('error_search/models/LinguisticModel')
+        except FileNotFoundError:
+            raise Exception("w2v model not found, current directory is {0}".format(os.getcwd()))
         logging.basicConfig(level=logging.INFO, filename='found.log')
-        model = Word2Vec.load(MODEL)
-        ad = AlphabetDetector()
-
         for s, sent in enumerate(tree):
             gen_chain = []
 
             for i, word in enumerate(sent):
                 self.check_mood(sent, i, word, s)
                 self.i_vs_we(i, word, s)
-                self.not_in_vocabulary(ad, word, i, model, s)
+                self.not_in_vocabulary(word, i, model, s)
                 gen_chain = self.find_genitives(gen_chain, word, s, i)
                 self.find_wrong_comparativ(sent, word, i, s)
                 self.find_wrong_coordinate_NPs(sent, i, s, word, model)
+
 
         for key, value in self.found.items():
             logging.info(key)
@@ -114,3 +115,5 @@ class Searcher:
                 logging.info(mistake)
 
         return self.found_word
+
+
