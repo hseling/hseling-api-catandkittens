@@ -51,7 +51,7 @@ def process_user_text_task(input_text=''):
         from ufal.udpipe import Model, Pipeline
         from error_search.process_text import process_text
         import os
-        if not os.path.exists('error_search/russian-syntagrus-ud-2.0-170801.udpipe'):
+        if not os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__),'error_search/russian-syntagrus-ud-2.0-170801.udpipe'))):
             boilerplate.fget_file('upload/russian-syntagrus-ud-2.0-170801.udpipe','error_search/russian-syntagrus-ud-2.0-170801.udpipe')
         ud_model = Model.load('error_search/russian-syntagrus-ud-2.0-170801.udpipe')
         pipeline = Pipeline(ud_model, 'tokenize', Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu')
