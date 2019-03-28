@@ -86,9 +86,9 @@ class Searcher:
     def check_all(self, tree):
         #s - sentence number
         #i - word number
-        if not os.path.exists(os.path.abspath('error_search/models/')):
+        if not os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__),'error_search/models/'))):
             os.mkdir('error_search/models/')
-        if not os.path.exists(os.path.abspath('error_search/models/LinguisticModel')):
+        if not os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__),'error_search/models/LinguisticModel'))):
             fget_file('upload/LinguisticModel.w2v.trainables.syn1neg.npy','error_search/models/LinguisticModel.trainables.syn1neg.npy')
             fget_file('upload/LinguisticModel.w2v.wv.vectors.npy','error_search/models/LinguisticModel.wv.vectors.npy')
             fget_file('upload/LinguisticModel.w2v','error_search/models/LinguisticModel')
