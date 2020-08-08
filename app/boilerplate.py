@@ -7,20 +7,11 @@ from uuid import uuid4
 from celery import Celery, result
 from werkzeug.utils import secure_filename
 
-from minio import Minio
-from minio.error import (ResponseError, BucketAlreadyOwnedByYou,
-                         BucketAlreadyExists)
-
 from mysql.connector import connect
 
 
 CELERY_BROKER_URL = environ["CELERY_BROKER_URL"]
 CELERY_RESULT_BACKEND = environ["CELERY_RESULT_BACKEND"]
-
-MINIO_URL = environ["MINIO_URL"]
-MINIO_ACCESS_KEY = environ["MINIO_ACCESS_KEY"]
-MINIO_SECRET_KEY = environ["MINIO_SECRET_KEY"]
-MINIO_BUCKET_NAME = environ['MINIO_BUCKET_NAME']
 
 MYSQL_HOST = environ["MYSQL_HOST"]
 MYSQL_USER = environ["MYSQL_USER"]
