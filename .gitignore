@@ -13,3 +13,4 @@ env/
 !.gitignore
 !.travis*
 .idea/
+data/
