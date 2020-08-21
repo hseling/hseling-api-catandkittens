@@ -11,4 +11,5 @@ COPY ./setup.py /dependencies/setup.py
 COPY ./hseling_api_catandkittens /dependencies/hseling_api_catandkittens
 RUN pip install -r /dependencies/requirements.txt
 RUN pip install /dependencies
+RUN mkdir /data
 COPY ./app /app
